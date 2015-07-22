@@ -1,8 +1,9 @@
 package user.controller;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
 
 import user.model.User;
 
@@ -12,46 +13,40 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
 public class UserManager {
+	static Logger logger = Logger.getLogger(UserManager.class);
 
-	public List<User> add(User contact) {
-		String output = null;
-		try {
-			Client client = Client.create();
-			WebResource webResource = client.resource("http://localhost:8080/user/UserWebService/addUser/"+ contact.getFirstName()+ "/"+ contact.getLastName());
-
-			ClientResponse response = webResource.type("application/json").get(ClientResponse.class);
-			if (response.getStatus() != 200) {
-				throw new RuntimeException("Failed : HTTP error code : "+ response.getStatus());
-			}
-			output = response.getEntity(String.class);
-		} catch (Exception e) {
-			e.printStackTrace();
+	public String add(User contact) {
+		String url = "http://localhost:8080/user/UserWebService/addUser/"+ contact.getFirstName()+ "/"+ contact.getLastName();
+		Map responseMap = getWSReponse(url);
+		if(responseMap.get("errorMessage") != null){
+			logger.error("Error occured while adding user: "+ responseMap.get("errorMessage"));
+			throw new RuntimeException(responseMap.get("errorMessage").toString());
 		}
-		return convertJsonToListObj(output);
+		return responseMap.get("result").toString();
 	}
 
 	public List<User> getUserslist() {
-		String output = null;
+		String url = "http://localhost:8080/user/UserWebService/getUserList";
+		Map responseMap = getWSReponse(url);
+		if(responseMap.get("errorMessage") != null){
+			logger.error("Error occured while getting user list: "+ responseMap.get("errorMessage"));
+			throw new RuntimeException(responseMap.get("errorMessage").toString());
+		}
+		return (List<User>) responseMap.get("data");
+	}
+	
+	public Map getWSReponse(String URL){
+		Map responseMap = null;
+		Gson gson = new Gson();
 		try {
 			Client client = Client.create();
-			WebResource webResource = client.resource("http://localhost:8080/user/UserWebService/getUserList");
+			WebResource webResource = client.resource(URL);
 			ClientResponse response = webResource.accept("application/json").get(ClientResponse.class);
-
-			if (response.getStatus() != 200) {
-				throw new RuntimeException("Failed : HTTP error code : "+ response.getStatus());
-			}
-			output = response.getEntity(String.class);
+			String output = response.getEntity(String.class);
+			responseMap = gson.fromJson(output, Map.class);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException("Failed : HTTP error code : "+ e.getMessage());
 		}
-		return convertJsonToListObj(output);
-	}
-
-	public List<User> convertJsonToListObj(String output) {
-		List<User> usersList = new ArrayList<User>();
-		Gson gson = new Gson();
-		User[] u = gson.fromJson(output, User[].class);
-		usersList = Arrays.asList(u);
-		return usersList;
+		return responseMap;
 	}
 }

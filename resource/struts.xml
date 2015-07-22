@@ -5,13 +5,26 @@
 
 <struts>
 	<constant name="struts.enable.DynamicMethodInvocation" value="true" />
-	<constant name="struts.devMode" value="true" />
+	<constant name="struts.devMode" value="false" />
 
 	<package name="default" extends="struts-default" namespace="/">
 
+		<global-results>
+			<result name="exception">/exception.jsp</result>
+			<result name="runtime_exception">/error.jsp</result>
+			<result name="error">/index.jsp</result>
+		</global-results>
+
+		<global-exception-mappings>
+			<exception-mapping exception="java.lang.Exception" result="exception"></exception-mapping>
+			<exception-mapping exception="java.lang.Error" result="error"></exception-mapping>
+			<exception-mapping exception="java.lang.RuntimeException" result="runtime_exception"></exception-mapping>
+		</global-exception-mappings>
+
 		<action name="add" class="user.view.UserAction" method="addUser">
-			<result name="SUCCESS">index.jsp</result>
-			<result name="input" type="chain">index.jsp</result>
+			<result name="SUCCESS" type="redirectAction">
+				<param name="actionName">retrieve</param>
+			</result>
 		</action>
 
 		<action name="retrieve" class="user.view.UserAction" method="retrieveUserList">

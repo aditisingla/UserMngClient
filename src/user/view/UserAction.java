@@ -5,7 +5,10 @@ import java.util.List;
 import user.controller.UserManager;
 import user.model.User;
 
-public class UserAction {
+import com.opensymphony.xwork2.ActionSupport;
+
+public class UserAction extends ActionSupport {
+	private static final long serialVersionUID = 1L;
 	private User user;
 	private List<User> userList;
 
@@ -16,20 +19,28 @@ public class UserAction {
 	}
 
 	public String retrieveUserList() {
-		this.userList = UserManager.getUserslist();
+		try {
+			this.userList = UserManager.getUserslist();
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
 		return "SUCCESS";
 	}
 
 	public String addUser() {
-		System.out.println(getUser());
-		try {
-			this.userList = UserManager.add(getUser());
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (user == null || user.getFirstName().isEmpty() || user.getLastName().isEmpty() ) {
+			addActionError("First Name & Last Name  should not be empty");
+			return "error";
+		} else {
+			try {
+				UserManager.add(getUser());
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		return "SUCCESS";
 	}
-	
+
 	public User getUser() {
 		return user;
 	}
